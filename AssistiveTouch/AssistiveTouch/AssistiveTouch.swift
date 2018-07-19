@@ -30,8 +30,11 @@ class AssistiveTouch: NSObject {
     }
     
     func makeVisibleWindow() {
+        // 如果新的window界面和app的原始window界面都要弹窗的话
+        // 一定要确定好弹出的controller
+        let window = UIApplication.shared.keyWindow
         assistiveWindow?.makeKeyAndVisible()
-        UIApplication.shared.keyWindow?.makeKey()
+        window?.makeKey()
     }
     
     func showAssistiveTouch() {
