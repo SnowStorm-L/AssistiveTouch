@@ -8,25 +8,55 @@
 
 import UIKit
 
-// 这个类是单例调用,所持有属性(window, controller)是不释放的
-// 如果是单个页面使用,不使用单例, 外面控制器,实例化,持有 直接用 就可以释放
-
-class AssistiveTouch: NSObject {
+class AssistiveTouch {
     
     static let share = AssistiveTouch()
     
-    var isShow = false
-    
-    var assistiveWindow: UIWindow?
+    private var assistiveWindow: UIWindow?
     
     var assistiveViewController: AssistiveViewController?
     
-    var assistiveWindowPoint = defaultPoint
+    private var windowCenterPoint = defaultPoint
+ 
+    func showAssistiveTouch() {
+        if assistiveWindow != nil {
+            return
+        }
+        createWindow()
+        createController()
+        makeVisibleWindow()
+    }
     
-    override init() {
-        super.init()
-        assistiveViewController = AssistiveViewController()
+    func closeAssistiveTouch() {
+        assistiveWindow?.rootViewController = nil
+        assistiveWindow?.removeFromSuperview()
+        assistiveWindow?.resignKey()
+        assistiveWindow = nil
+    }
+    
+}
+
+private extension AssistiveTouch {
+    
+    func createWindow() {
+        assistiveWindow = UIWindow(frame: CGRect(x: 0, y: 0, width: assistiveWidth, height: assistiveWidth))
+        setWindowlocation()
+        assistiveWindow?.layer.masksToBounds = true
+        createController()
+    }
+    
+    func createController() {
+        if assistiveViewController == nil {
+            assistiveViewController = AssistiveViewController()
+        }
         assistiveViewController?.delegate = self
+        assistiveWindow?.rootViewController = assistiveViewController
+    }
+    
+    func setWindowlocation() {
+        let rect = CGRect(x: 0, y: 0, width: assistiveWidth, height: assistiveWidth)
+        assistiveWindow?.frame = rect
+        assistiveWindow?.center = windowCenterPoint
     }
     
     func makeVisibleWindow() {
@@ -37,46 +67,21 @@ class AssistiveTouch: NSObject {
         window?.makeKey()
     }
     
-    func showAssistiveTouch() {
-        if isShow { return }
-        assistiveWindow = UIWindow(frame: CGRect(x: 0, y: 0, width: assistiveWidth, height: assistiveWidth))
-        assistiveWindow?.windowLevel = .greatestFiniteMagnitude
-        setlocation()
-        assistiveWindow?.layer.masksToBounds = true
-        assistiveWindow?.rootViewController = assistiveViewController
-        makeVisibleWindow()
-        isShow = true
-    }
-    
-    func closeAssistiveTouch() {
-        assistiveWindow?.rootViewController = nil
-        assistiveWindow?.removeFromSuperview()
-        assistiveWindow?.resignKey()
-        assistiveWindow = nil
-        isShow = false
-    }
-    
-    func setlocation() {
-        let rect = CGRect(x: 0, y: 0, width: assistiveWidth, height: assistiveWidth)
-        assistiveWindow?.frame = rect
-        assistiveWindow?.center = assistiveWindowPoint
-    }
-
 }
 
 extension AssistiveTouch: AssistiveViewControllerDelegate  {
     
     func assistiveViewController(_ viewController: AssistiveViewController, actionBeginAtPoint point: CGPoint) {
         assistiveWindow?.frame = screenFrame
-        assistiveViewController?.view.frame = screenFrame
-        assistiveViewController?.moveContentView(toPoint: assistiveWindowPoint)
+        viewController.view.frame = screenFrame
+        viewController.moveContentView(toPoint: windowCenterPoint)
     }
     
     func assistiveViewController(_ viewController: AssistiveViewController, actionEndAtPoint point: CGPoint) {
-        assistiveWindowPoint = point
-        setlocation()
+        windowCenterPoint = point
+        setWindowlocation()
         let contentPoint = CGPoint(x: cornerRadius, y: cornerRadius)
-        assistiveViewController?.moveContentView(toPoint: contentPoint)
+        viewController.moveContentView(toPoint: contentPoint)
     }
     
 }
